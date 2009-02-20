@@ -6,6 +6,8 @@
 
 DAEMON=/sbin/apcupsd
 CONFIG=/etc/default/apcupsd
+CONFIGFILES=/etc/apcupsd/apcupsd*.conf
+POWERFAIL=/var/spool/apcupsd/powerfail
 
 test -x $DAEMON || exit 0
 
@@ -25,24 +27,37 @@ fi
 case "$1" in
 	start)
 		echo -n "Starting APC UPS power management: "
-		rm -f /etc/apcupsd/powerfail
-    		if [ "`pidof apcupsd`" = "" ]
-    		then
-        		start-stop-daemon --start --quiet --exec $DAEMON 
-        		echo "apcupsd."
-    		else
-        		echo ""
-        		echo "A copy of the daemon is still running.  If you just stopped it,"
-        		echo "please wait about 5 seconds for it to shut down."
-        		exit 0
-    		fi
+		rm -f $POWERFAIL
+                # Create proper links
+                /usr/local/sbin/assignAPC
+
+		for f in $CONFIGFILES
+		do
+		   PIDFILE=`echo $f | sed 's/.*apcupsd\([^.]*\).conf/\/var\/run\/apcupsd\1.pid/g'`
+		   echo -n "$PIDFILE "
+		   if [ ! -f $PIDFILE ] || [ ! -e /proc/`cat $PIDFILE` ]
+		   then
+		       start-stop-daemon --start --pidfile $PIDFILE --quiet --exec $DAEMON -- -f $f -P $PIDFILE \
+			   || echo -n "failed! "
+#		       sleep 2
+		   else
+		       echo ""
+		       echo "A copy of the daemon is still running.  If you just stopped it,"
+		       echo "please wait about 5 seconds for it to shut down."
+		       exit 0
+		   fi
+		done
+		echo ""
   	;;
   	stop)
     		echo -n "Stopping APC UPS power management: "
-    		#start-stop-daemon --stop --quiet --exec $DAEMON
-    		echo "apcupsd." 
-		start-stop-daemon --stop --oknodo --pidfile /var/run/apcupsd.pid || echo "Not Running." 
-		rm -f /var/run/apcupsd.pid
+		for f in $CONFIGFILES
+		do
+		   PIDFILE=`echo $f | sed 's/.*apcupsd\([^.]*\).conf/\/var\/run\/apcupsd\1.pid/g'`
+		   echo -n "$PIDFILE "
+		   start-stop-daemon --stop --pidfile $PIDFILE --quiet --exec $DAEMON \
+		     || echo -n "failed: not running? "
+		done
 		echo ""
 
   	;;

@@ -1,0 +1,66 @@
+#!/bin/bash
+#emacs: -*- mode: shell-script; c-basic-offset: 4; tab-width: 4; indent-tabs-mode: t -*-
+#ex: set sts=4 ts=4 sw=4 noet:
+#-------------------------- =+- Shell script -+= --------------------------
+#
+# @file      assignAPC
+# @date      Fri Feb 20 11:16:31 2009
+# @brief
+#
+#
+#  Yaroslav Halchenko                                      CS@UNM, CS@NJIT
+#  web:     http://www.onerussian.com                      & PSYCH@RUTGERS
+#  e-mail:  yoh@onerussian.com                              ICQ#: 60653192
+#
+# DESCRIPTION (NOTES):
+#
+#   Helper script to create deterministic links to each APC unit's USB device
+#   It was coded long ago, so it is quite sloppy ;)
+#
+# COPYRIGHT: Yaroslav Halchenko 2007-2009
+#
+# LICENSE:
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the
+#  Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
+#
+# On Debian system see /usr/share/common-licenses/GPL for the full license.
+#
+#-----------------\____________________________________/------------------
+
+LDIR=/etc/apcupsd/links
+APCDEVICES=( YS0320110332 YS0422220996 YS0422221259 )
+
+mkdir -p $LDIR
+
+for d in ${APCDEVICES[*]}
+do
+#  echo $d
+  # First find out bus/dev for this device
+  usbparm=`grep -6 $d /proc/bus/usb/devices | grep 'Bus.*Dev' | head -1 | sed -e 's/.*Bus=0*\([1-90]*\) .*Dev#=[ 0]*\([0-9]*\) .*/\1 \2 0/g' 2>/dev/null`
+  found=0
+  # find out hiddev for it in a stupid way for now
+  for dhid in /dev/usb/hiddev*
+    do
+    hidparm=`/usr/local/sbin/usbinfo $dhid 2>/dev/null`
+    if [ "x${hidparm}x" == "x${usbparm}x" ]
+	then
+	found=1
+	ln -sf $dhid $LDIR/$d
+	break;
+    fi
+  done
+  [ $found == 1 ] || echo "Couldn't find corresponding device for UPS $d"
+done

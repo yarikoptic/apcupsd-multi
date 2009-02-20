@@ -1,0 +1,21 @@
+ABOUT
+-----
+
+Following directory contains files destined to make it possible to run
+multiple apcupsd instances using Debian's package of apcupsd (version
+3.12.4-2 as of etch release, which is used on that server).
+
+
+FILES
+-----
+
+ apcupsd.init -- init.d script (assumes assignAPC under /usr/local/sbin)
+
+ assignAPC -- helper script to dynamically create deterministic
+              assignment of APC units attached via USB
+              (TODO: split so configuration is under /etc/default/apcupsd)
+
+ apcaccess-multi -- very simple helper to query all APC available
+              units
+
+ apcupsd-usb1.conf -- sample configuration file for an USB attached APC

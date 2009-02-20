@@ -1,0 +1,9 @@
+#!/bin/bash
+
+PORTS=`awk '/^NISPORT /{print $2;}' /etc/apcupsd/apcupsd*.conf | sort -n`
+
+for i in $PORTS;
+do
+ echo "----------------- PORT $i ------------------------";
+ /sbin/apcaccess $1 localhost:$i ;
+done
