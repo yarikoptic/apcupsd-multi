@@ -1,0 +1,65 @@
+#! /bin/sh
+#
+# apcupsd
+#     Start the APC UPS daemon to monitor power status.
+#
+
+DAEMON=/sbin/apcupsd
+CONFIG=/etc/default/apcupsd
+
+test -x $DAEMON || exit 0
+
+test -e $CONFIG || exit 0
+
+set -e
+
+. $CONFIG
+
+if [ $ISCONFIGURED = no ]
+then
+	echo -n "Please check your configuration "
+	echo    " ISCONFIGURED in /etc/default/apcupsd"
+	exit 0
+fi
+
+case "$1" in
+	start)
+		echo -n "Starting APC UPS power management: "
+		rm -f /etc/apcupsd/powerfail
+    		if [ "`pidof apcupsd`" = "" ]
+    		then
+        		start-stop-daemon --start --quiet --exec $DAEMON 
+        		echo "apcupsd."
+    		else
+        		echo ""
+        		echo "A copy of the daemon is still running.  If you just stopped it,"
+        		echo "please wait about 5 seconds for it to shut down."
+        		exit 0
+    		fi
+  	;;
+  	stop)
+    		echo -n "Stopping APC UPS power management: "
+    		#start-stop-daemon --stop --quiet --exec $DAEMON
+    		echo "apcupsd." 
+		start-stop-daemon --stop --oknodo --pidfile /var/run/apcupsd.pid || echo "Not Running." 
+		rm -f /var/run/apcupsd.pid
+		echo ""
+
+  	;;
+  	restart|force-reload)
+    		echo -n "Restarting APC UPS power management: "
+		$0 stop
+    		sleep 10
+		$0 start
+  	;;
+  	status)
+    		#/sbin/apcaccess status
+    		$APCACCESS status
+  	;;
+  	*)
+    		echo "Usage: /etc/init.d/apcupsd {start|stop|restart|force-reload|status}" >&2
+    		exit 1
+  	;;
+esac
+
+exit 0
