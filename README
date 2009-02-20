@@ -19,3 +19,10 @@ FILES
               units
 
  apcupsd-usb1.conf -- sample configuration file for an USB attached APC
+
+
+LINKS
+-----
+
+http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=294256
+http://www.debian-administration.org/articles/151#comment_10
